@@ -1,0 +1,16 @@
+# Node.js
+node_modules
+.env
+.env.local
+.next
+dist
+coverage
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# macOS
+.DS_Store
+
