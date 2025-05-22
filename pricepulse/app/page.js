@@ -1,4 +1,3 @@
-// app/page.jsx
 "use client"; // Needed because we're using useRouter
 
 import { useEffect } from "react";
