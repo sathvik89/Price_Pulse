@@ -7,45 +7,30 @@ const PriceHistory = ({ priceHistory }) => {
   const chartInstance = useRef(null);
 
   useEffect(() => {
-    
-    if (!priceHistory || priceHistory.length < 1) {
-      return;
+    if (!priceHistory?.length) {
+      return null;
     }
-    
+
     if (chartInstance.current) {
       chartInstance.current.destroy();
     }
 
     const ctx = chartRef.current.getContext("2d");
 
-    // date labels
-    const labels = priceHistory.map((entry) => {
-      const date = new Date(entry.timestamp);
-      return date.toLocaleDateString("en-IN", {
-        month: "short",
+    // convert timestamps to readable date strings for labels
+    const labels = priceHistory.map((entry) =>
+      new Date(entry.timestamp).toLocaleString("en-IN", {
         day: "numeric",
-        hour: "numeric",
+        month: "short",
+        hour: "2-digit",
         minute: "2-digit",
-      });
-    });
+      })
+    );
 
-    const prices = priceHistory.map((entry) => {
-      const priceString = entry.price;
-      const numericPrice = Number.parseFloat(
-        priceString.replace(/[^0-9.]/g, "")
-      );
-      return numericPrice;
-    });
+    // convert price strings to numbers for plotting
+    const data = priceHistory.map((entry) => Number(entry.price));
 
-    // formattingg the numbers like ₹12,345.67
-    const formatRupees = (value) =>
-      new Intl.NumberFormat("en-IN", {
-        style: "currency",
-        currency: "INR",
-        maximumFractionDigits: 2,
-      }).format(value);
-
-    // building the chart
+    // create a new line chart with price data
     chartInstance.current = new Chart(ctx, {
       type: "line",
       data: {
@@ -53,13 +38,11 @@ const PriceHistory = ({ priceHistory }) => {
         datasets: [
           {
             label: "Price",
-            data: prices,
+            data,
             borderColor: "#3B82F6",
             backgroundColor: "rgba(59, 130, 246, 0.1)",
             borderWidth: 2,
-            tension: 0.3,
-            pointBackgroundColor: "#3B82F6",
-            pointRadius: 4,
+            tension: 0.1,
             fill: true,
           },
         ],
@@ -70,61 +53,30 @@ const PriceHistory = ({ priceHistory }) => {
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: "#111827",
-            titleColor: "#D1D5DB",
-            bodyColor: "#FFFFFF",
-            borderColor: "#4B5563",
-            borderWidth: 1,
-            padding: 10,
-            displayColors: false,
             callbacks: {
-              label: (context) => `Price: ${formatRupees(context.parsed.y)}`,
+              label: (ctx) => `₹${ctx.parsed.y.toLocaleString("en-IN")}`,
             },
           },
         },
         scales: {
-          x: {
-            grid: { color: "rgba(75, 85, 99, 0.2)" },
-            ticks: {
-              color: "#9CA3AF",
-              maxRotation: 45,
-              minRotation: 45,
-            },
-          },
           y: {
-            grid: { color: "rgba(75, 85, 99, 0.2)" },
             ticks: {
-              color: "#9CA3AF",
-              callback: (value) => formatRupees(value),
+              callback: (value) => `₹${value.toLocaleString("en-IN")}`,
             },
-            beginAtZero: false,
           },
         },
       },
     });
 
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-      }
-    };
+    // cleanup chart when component unmounts or before re-creating
+    return () => chartInstance.current?.destroy();
   }, [priceHistory]);
 
-//fallowup
-  if (!priceHistory || priceHistory.length < 1) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[300px] bg-gray-800 rounded-xl p-6 shadow-md">
-        <p className="text-gray-300 text-base">no price history available</p>
-        <p className="text-gray-500 text-sm mt-2">
-          price updates are collected hourly
-        </p>
-      </div>
-    );
-  }
+  if (!priceHistory) return <div>loading...</div>;
+  if (!priceHistory.length) return <div>no data yet</div>;
 
-  // render chart
   return (
-    <div className="h-[300px] bg-gray-800 p-4 rounded-xl shadow-md relative">
+    <div className="h-80 w-full">
       <canvas ref={chartRef} />
     </div>
   );

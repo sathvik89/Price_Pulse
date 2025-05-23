@@ -14,19 +14,24 @@ const Form = () => {
     e.preventDefault();
 
     const trimmedUrl = url.trim();
+
+    // Clear previous states
+    setError("");
+    setSuccess(false);
+
+    // Validate URL
     if (!trimmedUrl) {
-      setError("please enter a url");
+      setError("Please enter a URL");
       return;
     }
 
-    if (!trimmedUrl.includes("amazon.")) {
-      setError("please enter a valid amazon url");
+    // Better Amazon URL validation
+    if (!isValidAmazonUrl(trimmedUrl)) {
+      setError("Please enter a valid Amazon product URL");
       return;
     }
 
     setLoading(true);
-    setError("");
-    setSuccess(false);
 
     try {
       const res = await fetch(
@@ -40,44 +45,74 @@ const Form = () => {
         }
       );
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "failed to track product");
+        throw new Error(
+          data.error ||
+            "Failed to track product. Please try again or contact support."
+        );
       }
 
       setSuccess(true);
       setUrl("");
-      // Force a refresh of the data
-      router.refresh();
+
+      // Refresh data after 1.5s to allow backend processing
+      setTimeout(() => router.refresh(), 1500);
     } catch (err) {
-      setError(err.message);
+      // User-friendly error messages
+      const errorMessage = err.message.includes("Failed to find element")
+        ? "We're having trouble reading this product page. Amazon may have updated their layout."
+        : err.message;
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  // Helper function for URL validation
+  const isValidAmazonUrl = (url) => {
+    try {
+      const parsedUrl = new URL(url);
+      return (
+        parsedUrl.hostname.includes("amazon.") &&
+        parsedUrl.pathname.includes("/dp/")
+      );
+    } catch {
+      return false;
+    }
+  };
+
   return (
-    <>
+    <div className="w-full">
       <form
         onSubmit={handleSubmit}
         className="flex justify-around items-center w-full border border-gray-600 rounded-lg overflow-hidden"
       >
         <input
           type="url"
-          placeholder="enter amazon product url..."
+          placeholder="Paste Amazon product URL (e.g., https://www.amazon.in/dp/B0ABC123)..."
           className="w-full px-4 py-3 bg-transparent focus:outline-none placeholder:text-gray-400"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => {
+            setUrl(e.target.value);
+            setError(""); // Clear error when typing
+          }}
+          disabled={loading}
         />
         <Search loading={loading} />
       </form>
-      {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+
+      {error && (
+        <p className="text-red-500 text-sm mt-2 animate-fadeIn">⚠️ {error}</p>
+      )}
       {success && (
-        <p className="text-green-500 text-sm mt-2">
-          product tracked successfully!
+        <p className="text-green-500 text-sm mt-2 animate-fadeIn">
+          ✓ Product tracking started successfully! Updating your list...
         </p>
       )}
-    </>
+    </div>
   );
 };
 
