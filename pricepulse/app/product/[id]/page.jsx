@@ -1,6 +1,8 @@
 import { supabase } from "@/lib/supabaseClient";
 import ProductDetails from "@/app/components/ProductDetails";
 import PriceHistory from "@/app/components/PriceHistory";
+import PriceAlert from "@/app/components/PriceAlert";
+import PriceComparison from "@/app/components/PriceComparison";
 import BackButton from "@/app/components/BackButton";
 
 export const revalidate = 0; // disable caching
@@ -15,7 +17,16 @@ export default async function ProductPage({ params }) {
 
   if (productError) {
     console.error("Error fetching product:", productError);
-    return <div>Error loading product</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-[#0e0e20] to-[#000333] text-white">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
+          <p className="text-gray-400">
+            The product you're looking for doesn't exist.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   // Fetch price history
@@ -58,9 +69,6 @@ export default async function ProductPage({ params }) {
           </div>
 
           <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h2 className="text-2xl font-semibold text-blue-400 mb-4">
-              price comparison
-            </h2>
             <PriceComparison product={product} />
           </div>
         </div>

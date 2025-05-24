@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import Link from "next/link";
 
 const AllTrackedProducts = ({ serverProducts }) => {
   const [products, setProducts] = useState(serverProducts || []);
@@ -39,13 +40,14 @@ const AllTrackedProducts = ({ serverProducts }) => {
   return (
     <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {products.map((product) => (
-        <div
+        <Link
           key={product.id}
-          className="bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors"
+          href={`/product/${product.id}`}
+          className="block bg-gray-700 rounded-lg p-4 hover:bg-gray-600 transition-colors cursor-pointer"
         >
           {product.image_url && (
             <img
-              src={product.image_url}
+              src={product.image_url || "/placeholder.svg"}
               alt={product.title || "product image"}
               className="w-full h-48 object-contain mb-3 rounded"
             />
@@ -54,15 +56,8 @@ const AllTrackedProducts = ({ serverProducts }) => {
             {product.title || "Untitled Product"}
           </h3>
           <p className="text-green-400 text-lg mt-2">{product.current_price}</p>
-          <a
-            href={product.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-300 hover:text-white mt-2 block truncate"
-          >
-            view product
-          </a>
-        </div>
+          <p className="text-sm text-gray-300 mt-2">Click to view details →</p>
+        </Link>
       ))}
     </div>
   );
